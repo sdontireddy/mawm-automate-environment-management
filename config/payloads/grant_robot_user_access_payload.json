@@ -54,7 +54,7 @@
           "OrganizationId": "{target_organization}"
         }
       ],
-      "UserId": "emanager-robotuser"
+      "UserId": "robotuser"
     }
   ]
 }
