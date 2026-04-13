@@ -1,0 +1,167 @@
+# API Sequence Configuration for MAWM Environment Creation
+
+sequences:
+  clone_bulk_transports:
+    description: "Clone BulkTransports configuration from {source_location} to {target_location}"
+    uses_golden: true
+    steps:
+      - id: fetch_bulk_transports
+        name: "Fetch BulkTransports from Source environment"
+        endpoint: "/device-integration/api/deviceintegration/transport?size=1000"
+        method: GET
+        target: "source"
+        required: true
+        ignore_cache: false # set true to ignore cached response and re-fetch
+        skip_step: false
+        save_response: "bulk_transports_data"
+        validate_response:
+          status_code: 200
+
+      - id: post_bulk_transports
+        name: "Post BulkTransports to Destination"
+        endpoint: "/device-integration/api/deviceintegration/transport/bulkImport"
+        method: POST
+        target: "destination"
+        required: true
+        skip_step: false
+        ignore_cache: true
+        skip_only_api: true # Process transformations and save file, but skip actual API POST
+        depends_on: ["fetch_bulk_transports"]
+        use_saved_data: "bulk_transports_data"
+        transform_data:
+          attribute_replacements:
+            ProfileId: "{target_location}" # Replace source ProfileId with target location
+            UpdatedBy: "{user_name}" # Set UpdatedBy to current user
+        validate_response:
+          status_code: 200
+        save_response: "post_bulk_transports_result"
+
+      - id: verify_bulk_transports
+        name: "Verify BulkTransports "
+        endpoint: "/device-integration/api/deviceintegration/transport?size=1000"
+        method: GET
+        target: "destination"
+        required: true
+        skip_step: false
+        depends_on: ["post_bulk_transports"]
+        retry_on_failure: true
+        max_retries: 3
+        validate_response:
+          status_code: 200
+        retry_delay: 30
+        save_response: "verify_bulk_transports_result"
+
+  sync-items:
+    description: "Sync Items from Item Master"
+    uses_golden: false
+    steps:
+      - id: item_master_sync
+        name: "Fetch Items from Item Master"
+        endpoint: "/item-master/api/item-master/item/v2/sync"
+        method: POST
+        target: "destination"
+        required: true
+        ignore_cache: false
+        skip_step: false
+        payload_template: "item_master_sync"
+        save_response: "item_master_sync_data"
+        # Optional: Override OAuth credentials for this step only
+        oauth_override:
+          username: "l0_user" # Different L0 user
+          password: "l0_password"
+        # Optional: Exclude certain headers from this request
+        exclude_headers:
+          - "Location"
+          - "Organization"
+        validate_response:
+          status_code: 200
+
+  grants-access-to-users:
+    description: "Grant Access to Multiple Users - Iterates through CSV file with {{USER_ID}} placeholders"
+    uses_golden: false
+    csv_data: "data/grant_users.csv"  # Path to CSV file relative to config directory
+    steps:
+      - id: grant_user_access
+        name: "Grant Access to User"
+        endpoint: "/organization/api/organization/user/save"
+        method: POST
+        target: "destination"
+        required: true
+        ignore_cache: true
+        skip_step: false
+        payload_template: "grant_users_access_payload"
+        # Use L0 credentials for this request
+        oauth_override:
+          username: "XXXXX"
+          password: "YYYYY"
+        # Exclude Location and Organization headers for L0 user
+        exclude_headers:
+          - "Location"
+          - "Organization"
+        save_response: "grant_user_access_result"
+        validate_response:
+          status_code: 200
+
+  grants-access-to-robot-users:
+    description: "Grant Access to Robot Users using L0 Credentials"
+    uses_golden: false
+    steps:
+      - id: grant_robot_user_access
+        name: "Grant Access to Robot Users"
+        endpoint: "/organization/api/organization/user/bulkImport"
+        method: POST
+        target: "destination"
+        required: true
+        ignore_cache: true
+        skip_step: false
+        payload_template: "grant_robot_user_access_payload"
+        # Use L0 credentials for this request
+        oauth_override:
+          username: "YYYYY"
+          password: "XXXXX"
+        # Exclude Location and Organization headers for L0 user
+        exclude_headers:
+          - "Location"
+          - "Organization"
+        save_response: "grant_robot_user_access_result"
+        validate_response:
+          status_code: 200
+  
+  validate_new_environment:
+    description: "Validate new environment"
+    uses_golden: true
+    steps:
+      - id: close_trailer_key_encryption_api
+        name: "Get the Close Trailer Encryption Key"
+        endpoint: "/scoutbound/api/ext/Encryption"
+        method: GET
+        target: "source"
+        required: true
+        ignore_cache: true
+        skip_step: false
+        save_response: "close_trailer_key_encryption_api_result"
+        validate_response:
+          status_code: 200
+# Payload Templates
+payloads:
+  item_master_sync:
+    Aggregation: null
+    Page: 0
+    Query: null
+    Size: 0
+    Template: {}
+    limit: 0
+    offset: 0
+    sorted: true
+
+  post_close_trailer_key_encryption_api:
+    publicKey: "{close_trailer_key_encryption_api_result.data[0].publicKey}"
+
+# Rollback sequence (executed in reverse if failure occurs)
+rollback:
+  enabled: false
+  cleanup_endpoints:
+    - endpoint: "/facilities/{facility_id}"
+      method: DELETE
+    - endpoint: "/integrations/{integration_id}"
+      method: DELETE

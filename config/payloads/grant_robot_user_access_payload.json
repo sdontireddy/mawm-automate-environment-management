@@ -1,0 +1,60 @@
+{
+  "data": [
+    {
+      "OrgUser": [
+        {
+          "UserRole": [
+            {
+              "RoleId": "admin@{target_organization}",
+              "RoleOrgId": "{target_organization}"
+            }
+          ],
+          "OrganizationId": "{target_organization}"
+        }
+      ],
+      "UserId": "wmrobotuser"
+    },
+    {
+      "OrgUser": [
+        {
+          "UserRole": [
+            {
+              "RoleId": "admin@{target_organization}",
+              "RoleOrgId": "{target_organization}"
+            }
+          ],
+          "OrganizationId": "{target_organization}"
+        }
+      ],
+      "UserId": "wmrobotuser-api"
+    },
+    {
+      "OrgUser": [
+        {
+          "UserRole": [
+            {
+              "RoleId": "admin@{target_organization}",
+              "RoleOrgId": "{target_organization}"
+            }
+          ],
+          "OrganizationId": "{target_organization}"
+        }
+      ],
+      "UserId": "ma-gpi-edge-user"
+    },
+    {
+      "OrgUser": [
+        {
+          "UserRole": [
+            {
+              "RoleId": "Technology",
+              "RoleOrgId": "{{ClientID}}"
+            }
+          ],
+          "OrganizationId": "{target_organization}"
+        }
+      ],
+      "UserId": "emanager-robotuser"
+    }
+  ]
+}

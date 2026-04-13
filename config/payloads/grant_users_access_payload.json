@@ -1,0 +1,19 @@
+{
+  "UserLocation": [
+    {
+      "LocationId": "{target_organization}"
+    }
+  ],
+  "OrgUser": [
+    {
+      "UserRole": [
+        {
+          "RoleId": "Technology",
+          "RoleOrgId": "{{ClientID}}"
+        }
+      ],
+      "OrganizationId": "{target_organization}"
+    }
+  ],
+  "UserId": "{{USER_ID}}"
+}

@@ -1,0 +1,76 @@
+# Base Configuration - Default for All Environments
+# These are fallback values used when not specified in individual environment variants
+
+default_base_url: "https://{{clientID}}.sce.manh.com"
+default_oauth_token_url: "https://{{clientID}}-auth.sce.manh.com/oauth/token"
+
+# Timeout settings (in seconds) - same for all environments
+timeouts:
+  connection: 15
+  read: 45
+  total: 90
+
+# Retry configuration - same for all environments
+retry:
+  max_attempts: 0
+  backoff_factor: 2
+  retry_statuses: [400,408, 429, 500, 502, 503, 504]
+
+# ============================================================================
+# Environment Variants
+# ============================================================================
+# Two environments: source (for reading data) and target (for writing data)
+# Configure URLs, headers, and OAuth credentials for each
+
+environments:
+  
+  # Source Environment (read from here)
+  source:
+    name: "{{Location}}"
+    description: "Source environment for cloning/reading data"
+    base_url: "https://{{clientID}}.sce.manh.com"
+    oauth_token_url: "https://{{clientID}}-auth.sce.manh.com/oauth/token"
+    custom_headers:
+      Location: "{{Location}}"
+      Organization: "{{Location}}"
+    oauth:
+      client_id: "omnicomponent.1.0.0"
+      client_secret: "****MASKED****"
+      username: "sdontireddy"
+      password: "****MASKED****"
+      grant_type: "password"
+    parameters:
+      enable_debug_mode: true
+      enable_test_data: true
+    validation:
+      strict_mode: false
+      allow_warnings: true
+    notifications:
+      enabled: false
+  
+  # Target Environment (write to here)
+  target:
+    name: "{{Location}}"
+    description: "Target environment for cloning/writing data"
+    base_url: "https://{{clientID}}.sce.manh.com"
+    oauth_token_url: "https://{{clientID}}-auth.sce.manh.com/oauth/token"
+    custom_headers:
+      Location: "{{Location}}"
+      Organization: "{{Location}}"
+    oauth:
+      client_id: "omnicomponent.1.0.0"
+      client_secret: "****MASKED****"
+      username: "{{Location}}admin"
+      password: "****MASKED****"
+      grant_type: "password"
+    parameters:
+      enable_debug_mode: false
+      enable_test_data: false
+    validation:
+      strict_mode: true
+      allow_warnings: false
+      require_approval: true
+    notifications:
+      enabled: true
+      recipients:
+        - "ops-team@example.com"
